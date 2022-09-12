@@ -8,6 +8,12 @@ const $searchForm = $("#searchForm");
 const API_URL = "https://api.tvmaze.com/search/shows";
 const ALT_IMG = "https://tinyurl.com/tv-missing";
 
+interface showInterface {
+  id: number;
+  name: string;
+  summary: string;
+  image: string;
+}
 
 /** Given a search term, search for tv shows that match that query.
  *
@@ -16,31 +22,25 @@ const ALT_IMG = "https://tinyurl.com/tv-missing";
  *    (if no image URL given by API, put in a default image URL)
  */
 
-interface showInterface {
-  id: number;
-  name: string;
-  summary: string | null;
-  image: string;
-}
-
 async function getShowsByTerm(term: string | undefined): Promise<showInterface[]> {
   const results = await axios.get(API_URL, { params: { q: term } });
-  console.log("summary", results.data.summary);
   let shows = results.data.map((s: {
-    show: { id: number, name: string; },
-    summary: string,
-    image: { medium: string | undefined; };
+    show: {
+      id: number,
+      name: string,
+      summary: string,
+      image: { medium: string | undefined; };
+    };
   }) => {
     return (
       {
         id: s.show.id,
         name: s.show.name,
-        summary: s.summary,
-        image: s.image ? s.image.medium : ALT_IMG,
+        summary: s.show.summary,
+        image: s.show.image ? s.show.image.medium : ALT_IMG,
       }
     );
   });
-  console.log("shows", shows)
   return shows;
 }
 

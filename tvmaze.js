@@ -12780,6 +12780,12 @@ var $episodesArea = $("#episodesArea");
 var $searchForm = $("#searchForm");
 var API_URL = "https://api.tvmaze.com/search/shows";
 var ALT_IMG = "https://tinyurl.com/tv-missing";
+/** Given a search term, search for tv shows that match that query.
+ *
+ *  Returns (promise) array of show objects: [show, show, ...].
+ *    Each show object should contain exactly: {id, name, summary, image}
+ *    (if no image URL given by API, put in a default image URL)
+ */
 function getShowsByTerm(term) {
     return __awaiter(this, void 0, void 0, function () {
         var results, shows;
@@ -12788,16 +12794,14 @@ function getShowsByTerm(term) {
                 case 0: return [4 /*yield*/, axios_1.default.get(API_URL, { params: { q: term } })];
                 case 1:
                     results = _a.sent();
-                    console.log("summary", results.data.summary);
                     shows = results.data.map(function (s) {
                         return ({
                             id: s.show.id,
                             name: s.show.name,
-                            summary: s.summary,
-                            image: s.image ? s.image.medium : ALT_IMG,
+                            summary: s.show.summary,
+                            image: s.show.image ? s.show.image.medium : ALT_IMG,
                         });
                     });
-                    console.log("shows", shows);
                     return [2 /*return*/, shows];
             }
         });
