@@ -4,8 +4,9 @@ import * as $ from 'jquery';
 const $showsList = $("#showsList");
 const $episodesArea = $("#episodesArea");
 const $searchForm = $("#searchForm");
+const $episodesList = $("episodesList");
 
-const API_URL = "https://api.tvmaze.com/search/shows";
+const API_URL = "https://api.tvmaze.com/";
 const ALT_IMG = "https://tinyurl.com/tv-missing";
 
 interface showInterface {
@@ -15,6 +16,13 @@ interface showInterface {
   image: string;
 }
 
+interface episodeInterface {
+  id: number;
+  name: string;
+  season: number;
+  number: number;
+}
+
 /** Given a search term, search for tv shows that match that query.
  *
  *  Returns (promise) array of show objects: [show, show, ...].
@@ -22,8 +30,8 @@ interface showInterface {
  *    (if no image URL given by API, put in a default image URL)
  */
 
-async function getShowsByTerm(term: string | undefined): Promise<showInterface[]> {
-  const results = await axios.get(API_URL, { params: { q: term } });
+async function getShowsByTerm(term: string ): Promise<showInterface[]> {
+  const results = await axios.get(`${API_URL}search/shows`, { params: { q: term } });
   let shows = results.data.map((s: {
     show: {
       id: number,
@@ -78,7 +86,7 @@ function populateShows(shows: showInterface[]) {
  *    Hide episodes area (that only gets shown if they ask for episodes)
  */
 
-async function searchForShowAndDisplay() {
+async function searchForShowAndDisplay(): Promise<void> {
   const term = $("#searchForm-term").val();
 
   if (typeof term === "string") {
@@ -89,7 +97,7 @@ async function searchForShowAndDisplay() {
   }
 }
 
-$searchForm.on("submit", async function (evt) {
+$searchForm.on("submit", async function (evt: JQuery.SubmitEvent) {
   evt.preventDefault();
   await searchForShowAndDisplay();
 });
@@ -99,8 +107,51 @@ $searchForm.on("submit", async function (evt) {
  *      { id, name, season, number }
  */
 
-// async function getEpisodesOfShow(id) { }
+async function getEpisodesOfShow(id : number): Promise<episodeInterface[]>{
+  const results = await axios.get(`${API_URL}shows/${id}/episodes`);
+  console.log("EP results: ", results.data)
+  let episodes = results.data.map((e: episodeInterface) => {
+    return (
+      {
+        id: e.id,
+        name: e.name,
+        season: e.season,
+        number: e.number,
+      }
+    );
+  });
 
-/** Write a clear docstring for this function... */
+  return episodes;
+ }
 
-// function populateEpisodes(episodes) { }
+/**
+ * Given list of episodes, create markup for each and add to DOM
+ */
+
+function populateEpisodes(episodes: episodeInterface[]) {
+
+  for(let episode of episodes){
+    const $episodeInfo = $(`<li> ${episode.name}
+    Season: ${episode.season}, Number: ${episode.number} </li>`);
+
+    $episodesArea.append($episodeInfo);
+  }
+
+  $episodesArea.show();
+}
+
+$("#showsList").on("click", "button", showEpisodeList);
+
+/**
+ * Event handler for episodes button and
+ * populates list of episodes
+ */
+async function showEpisodeList(event : JQuery.ClickEvent): Promise<void>{
+  $episodesList.empty();
+
+  const showId = $(event.target).closest(".Show").data("show-id");
+
+  const episodes = await getEpisodesOfShow(showId);
+  populateEpisodes(episodes);
+  $episodesArea.show();
+}
